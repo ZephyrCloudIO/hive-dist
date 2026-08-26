@@ -34,6 +34,25 @@ TARGET_REPO="${TARGET_REPO:-ZephyrCloudIO/hive-dist}"
 VERSION="${VERSION:-latest}"
 INSTALL_DIR="${INSTALL_DIR:-$HOME/.local/bin}"
 
+# Optional auth for the GitHub API: unauthenticated release resolution shares
+# a 60/hour pool per egress IP, which shared CI runners exhaust. When the
+# caller provides GITHUB_TOKEN (or GH_TOKEN), the API call below carries it;
+# asset downloads from github.com do not need it for a public repo.
+API_AUTH=""
+if [ -n "${GITHUB_TOKEN:-}" ]; then
+  API_AUTH="Authorization: Bearer $GITHUB_TOKEN"
+elif [ -n "${GH_TOKEN:-}" ]; then
+  API_AUTH="Authorization: Bearer $GH_TOKEN"
+fi
+
+api_get() {
+  if [ -n "$API_AUTH" ]; then
+    curl -fsSL -H "$API_AUTH" "$1"
+  else
+    curl -fsSL "$1"
+  fi
+}
+
 BINARIES="hive-daemon hive-updater hive-iroh-peer hive-iroh-bench model-host"
 
 die() {
@@ -118,7 +137,7 @@ else
   RELEASE_BASE="https://github.com/$TARGET_REPO/releases/download/$VERSION"
 fi
 
-TAG="$(curl -fsSL "$RELEASE_API" | awk -F'"' '/"tag_name"/ {print $4; exit}')" \
+TAG="$(api_get "$RELEASE_API" | awk -F'"' '/"tag_name"/ {print $4; exit}')" \
   || die "could not resolve release ($VERSION) for $TARGET_REPO"
 [ -n "$TAG" ] || die "empty tag_name in release response for $TARGET_REPO ($VERSION)"
 printf 'validate: release: %s\n' "$TAG"
