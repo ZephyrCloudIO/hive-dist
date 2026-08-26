@@ -1,0 +1,72 @@
+# hive.rb.tmpl — Homebrew formula template for the hive-fleet binaries.
+#
+# This is a TEMPLATE. The hive-dist rail's release machinery bakes it at
+# publish time: {{TARGET_REPO}}, {{VERSION}}, and the five per-platform
+# {{SHA256_<PLATFORM>}} digests are substituted from the release manifest
+# (never hand-edited — the digests are the trust anchor, engine rule E5's
+# content-addressing applied to distribution).
+#
+# The baked formula lands at Formula/hive.rb in the distribution repo, which
+# doubles as a Homebrew tap: `brew tap {{TARGET_REPO}}` then `brew install hive`.
+#
+# Asset naming (must match the rail's dist-release asset assembly):
+#   hive-fleet-mac-arm64.tar.gz, hive-fleet-mac-x64.tar.gz,
+#   hive-fleet-linux-x64.tar.gz, hive-fleet-linux-arm64.tar.gz
+# Windows has no Homebrew story; use install.ps1 there.
+
+class Hive < Formula
+  desc "Fleet-member binaries: daemon, updater, iroh peer/bench, model host"
+  homepage "https://github.com/{{TARGET_REPO}}"
+  version "{{VERSION}}"
+  license "MIT"
+
+  # Trust model: the SHA-256 of each platform archive, pinned from the
+  # release's sha256sums.txt at publish time. No code signing — the digest
+  # is the whole trust anchor, matching the updater's digest-pinned model.
+  on_macos do
+    on_arm do
+      url "https://github.com/{{TARGET_REPO}}/releases/download/v{{VERSION}}/hive-fleet-mac-arm64.tar.gz"
+      sha256 "{{SHA256_MAC_ARM64}}"
+    end
+    on_intel do
+      url "https://github.com/{{TARGET_REPO}}/releases/download/v{{VERSION}}/hive-fleet-mac-x64.tar.gz"
+      sha256 "{{SHA256_MAC_X64}}"
+    end
+  end
+
+  on_linux do
+    on_intel do
+      url "https://github.com/{{TARGET_REPO}}/releases/download/v{{VERSION}}/hive-fleet-linux-x64.tar.gz"
+      sha256 "{{SHA256_LINUX_X64}}"
+    end
+    on_arm do
+      url "https://github.com/{{TARGET_REPO}}/releases/download/v{{VERSION}}/hive-fleet-linux-arm64.tar.gz"
+      sha256 "{{SHA256_LINUX_ARM64}}"
+    end
+  end
+
+  def install
+    bin.install %w[
+      hive-daemon
+      hive-updater
+      hive-iroh-peer
+      hive-iroh-bench
+      model-host
+    ]
+  end
+
+  test do
+    # The same smoke the validate scripts run: every binary must answer
+    # --version with exit 0. Digest verification is Homebrew's own (sha256
+    # stanzas above) before this block ever runs.
+    %w[
+      hive-daemon
+      hive-updater
+      hive-iroh-peer
+      hive-iroh-bench
+      model-host
+    ].each do |binary|
+      system bin/binary, "--version"
+    end
+  end
+end
