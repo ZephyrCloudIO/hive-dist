@@ -35,6 +35,9 @@ match, the installer deletes the download and exits non-zero.
 
 ## Install
 
+**The full guide — install per platform, verify, check peers see each
+other, update, uninstall (each one command): [docs/install.md](docs/install.md).**
+
 ### macOS / Linux / WSL / Git Bash (POSIX)
 
 ```sh
@@ -114,6 +117,7 @@ release published.
 
 ```
 README.md              this file
+docs/install.md        the install/verify/update/uninstall guide
 install.sh             POSIX installer (mac/linux/WSL/Git Bash)
 install.ps1            native-Windows installer (PowerShell)
 validate.sh            POSIX validator
